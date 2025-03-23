@@ -1,0 +1,13 @@
+# Node / TypeScript
+node_modules
+dist
+build
+out
+*.tsbuildinfo
+*.js
+*.js.map
+
+# amplify
+.amplify
+amplify_output.json
+
