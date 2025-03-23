@@ -1,146 +1,72 @@
-import { useEffect, useState } from "react";
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { fetchUserAttributes } from "aws-amplify/auth";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "../amplify/data/resource";
-
-const dataClient = generateClient<Schema>();
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-// Add these color utility functions
-const generateGradient = (role: 'user' | 'assistant') => {
-  return role === 'user'
-    ? 'bg-gradient-to-r from-brand-accent-primary to-brand-accent-secondary'
-    : 'bg-gradient-to-r from-purple-900/30 to-slate-800/30'; // Subtle purple tint
-};
+import { useState } from "react";
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [userAttributes, setUserAttributes] = useState<Record<string, string | undefined> | undefined>();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [conversationId, setConversationId] = useState<string | null>(null); // State for conversation ID
-  const { signOut } = useAuthenticator();
-  const hardcodedConversationId = "hardcoded-conversation-id"; // Hardcoded conversation ID for now // TODO: Remove this and replace with lookup based on user sellection of which convo they are trying to interact with
+  const [pallet, setPallet] = useState("");
+  const [region, setRegion] = useState("");
+  const [diet, setDiet] = useState("");
 
-  console.log(userAttributes);
-  useEffect(() => {
-    async function getUserAttributes() {
-      const attributes = await fetchUserAttributes();
-      setUserAttributes(attributes);
-      setIsLoading(false);
-    }
-    getUserAttributes();
-  }, []);
-
-  const handleSendMessage = async (content: string) => {
-    try {
-      let convId = conversationId || hardcodedConversationId
-      if (!conversationId) {
-        const { data: newConversation } = await dataClient.models.Conversation.create({
-          id: hardcodedConversationId // Use the hardcoded ID for the new conversation
-        });
-        convId = newConversation?.id || hardcodedConversationId;
-        setConversationId(convId);
-      }
-
-      const { data: savedMessage } = await dataClient.models.Message.create({
-        content,
-        conversationId: convId // Link the message to the conversation
-      });
-      console.log('Message saved to backend:', savedMessage);
-    } catch (error) {
-      console.error('Error sending message to backend:', error);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
-
-    setMessages(prev => [...prev, { role: 'user', content: inputMessage }]);
-
-    handleSendMessage(inputMessage);
-
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `This is a mock response to: "${inputMessage}"`
-      }]);
-    }, 1000);
-
-    setInputMessage('');
+    console.log("Submitted values:", { pallet, region, diet });
+    // Optionally, you can clear the form or perform additional actions here
   };
-
-  if (isLoading) {
-    return null;
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-bg-dark via-brand-bg-light to-brand-bg-dark">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-brand-bg-dark via-brand-bg-light to-brand-bg-dark caret-white">
+      {/* Header with navigation */}
       <header className="bg-brand-surface-dark backdrop-blur-md border-b border-brand-surface-border fixed top-0 w-full z-10">
         <div className="max-w-6xl mx-auto flex justify-between items-center p-4">
-          <h1 className="text-2xl font-light text-brand-text-primary">Brain in Cup</h1>
-          <button
-            onClick={signOut}
-            className="px-4 py-2 text-sm text-brand-text-secondary hover:text-brand-text-primary transition-colors duration-200"
-          >
-            Sign out
-          </button>
+          <h1 className="text-2xl font-light text-brand-text-primary">ForkIt</h1>
+          <nav className="space-x-4">
+            <a href="#" className="text-brand-text-primary hover:text-brand-accent-primary">Home</a>
+            <a href="#" className="text-brand-text-primary hover:text-brand-accent-primary">Settings</a>
+          </nav>
         </div>
       </header>
 
-      <div className="flex flex-col pt-20 pb-24 min-h-screen w-full">
-        {/* Chat Container */}
-        <main className="flex-1 overflow-auto space-y-6 max-w-6xl mx-auto w-full px-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl p-4 shadow-sm ${generateGradient(message.role)} 
-                  ${message.role === 'user' ? 'text-brand-text-primary' : 'text-brand-text-secondary'}`}
-              >
-                <p className="leading-relaxed">{message.content}</p>
-              </div>
-            </div>
-          ))}
-        </main>
-
-        {/* Input Form */}
-        <div className="fixed bottom-0 left-0 right-0 bg-brand-surface-dark backdrop-blur-md border-t border-brand-surface-border">
-          <div className="max-w-6xl mx-auto p-4">
-            <form
-              onSubmit={handleSubmit}
-              className="flex gap-3"
-            >
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Type your message..."
-                className="flex-1 rounded-full px-6 py-3 bg-brand-surface-dark border border-brand-surface-border 
-                  text-brand-text-primary placeholder-brand-text-muted
-                  focus:outline-none focus:border-brand-accent-primary focus:ring-2 focus:ring-brand-accent-primary/20 
-                  transition-all duration-200"
-              />
-              <button
-                type="submit"
-                className="px-8 py-3 rounded-full bg-gradient-to-r from-brand-accent-primary to-brand-accent-secondary 
-                  text-brand-text-primary shadow-sm hover:opacity-90 transition-all duration-200 
-                  focus:outline-none focus:ring-2 focus:ring-brand-accent-primary/20"
-              >
-                Send
-              </button>
-            </form>
+      {/* Centered form */}
+      <div className="flex flex-col items-center justify-center pt-20 pb-24 min-h-screen w-full">
+        <form onSubmit={handleSubmit} className="bg-brand-surface-dark p-8 rounded-lg shadow-md space-y-6">
+          <div>
+            <label htmlFor="pallet" className="block text-brand-text-primary mb-2">Pallet</label>
+            <input
+              id="pallet"
+              type="text"
+              value={pallet}
+              onChange={(e) => setPallet(e.target.value)}
+              placeholder="Enter pallet"
+              className="w-full rounded-md px-4 py-2 bg-brand-bg-dark border border-brand-surface-border text-brand-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent-primary/20"
+            />
           </div>
-        </div>
+          <div>
+            <label htmlFor="region" className="block text-brand-text-primary mb-2">Region</label>
+            <input
+              id="region"
+              type="text"
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              placeholder="Enter region"
+              className="w-full rounded-md px-4 py-2 bg-brand-bg-dark border border-brand-surface-border text-brand-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent-primary/20"
+            />
+          </div>
+          <div>
+            <label htmlFor="diet" className="block text-brand-text-primary mb-2">Diet</label>
+            <input
+              id="diet"
+              type="text"
+              value={diet}
+              onChange={(e) => setDiet(e.target.value)}
+              placeholder="Enter diet"
+              className="w-full rounded-md px-4 py-2 bg-brand-bg-dark border border-brand-surface-border text-brand-text-primary focus:outline-none focus:ring-2 focus:ring-brand-accent-primary/20"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full px-8 py-3 rounded-full bg-gradient-to-r from-brand-accent-primary to-brand-accent-secondary text-brand-text-primary shadow-sm hover:opacity-90 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-accent-primary/20"
+          >
+            Submit
+          </button>
+        </form>
       </div>
     </div>
   );

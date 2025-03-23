@@ -107,13 +107,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider theme={customTheme as any}>
       <div className="bg-gradient-to-br from-brand-bg-dark via-brand-bg-light to-brand-bg-dark min-h-screen">
-<<<<<<< HEAD
-        <Authenticator className="flex items-center justify-center caret-white min-h-screen">
-          <App />
-        </Authenticator>
-=======
         <App />
->>>>>>> f2594effc25fda73a323d87a30adf7bb66b29a2e
       </div>
     </ThemeProvider>
   </React.StrictMode>
